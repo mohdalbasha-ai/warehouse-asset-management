@@ -26,36 +26,87 @@ import { errorHandler } from "./middleware/errorHandler";
 export function createApp() {
   const app = express();
 
+  // Security
   app.use(helmet());
-  app.use(cors({ origin: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(",").map((v) => v.trim()) : true, credentials: true }));
+
+  // CORS
+  app.use(
+    cors({
+      origin: [
+        "https://warehouse-frontend-irof.onrender.com",
+        "http://localhost:5173",
+      ],
+      credentials: true,
+    })
+  );
+
+  // JSON body
   app.use(express.json({ limit: "5mb" }));
 
-  // حماية أساسية من هجمات القوة الغاشمة على تسجيل الدخول
-  const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
+  // Login rate limit
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+  });
+
+  // Authentication
   app.use("/api/auth", authLimiter, authRouter);
 
+  // Organization
   app.use("/api/departments", departmentRouter);
   app.use("/api/centers", centerRouter);
   app.use("/api/employees", employeeRouter);
+
+  // Contracts
   app.use("/api/contracts", contractRouter);
+
+  // Inventory
   app.use("/api/stock", stockRouter);
+
+  // Devices
   app.use("/api/device-assignments", deviceAssignmentRouter);
   app.use("/api/devices", deviceRouter);
+
+  // Suppliers
   app.use("/api/suppliers", supplierRouter);
+
+  // Warehouses
   app.use("/api/warehouses", warehouseRouter);
+
+  // Items
   app.use("/api/items", itemRouter);
+
+  // Warranty
   app.use("/api/warranty", warrantyRouter);
+
+  // Maintenance
   app.use("/api/maintenance", maintenanceRouter);
+
+  // Notifications
   app.use("/api/notifications", notificationRouter);
+
+  // Dashboard
   app.use("/api/dashboard", dashboardRouter);
+
+  // Users & Roles
   app.use("/api/users", userRouter);
   app.use("/api/roles", roleRouter);
+
+  // Audit
   app.use("/api/audit-log", auditLogRouter);
+
+  // Reports
   app.use("/api/reports", reportRouter);
 
-  app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
+  // Health check
+  app.get("/api/health", (_req, res) => {
+    res.json({
+      status: "ok",
+      service: "warehouse-api",
+    });
+  });
 
-  // يجب أن يكون آخر middleware
+  // Error handler - must be last
   app.use(errorHandler);
 
   return app;
