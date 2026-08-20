@@ -26,87 +26,53 @@ import { errorHandler } from "./middleware/errorHandler";
 export function createApp() {
   const app = express();
 
-  // Security
   app.use(helmet());
 
-  // CORS
   app.use(
     cors({
-      origin: [
-        "https://warehouse-frontend-irof.onrender.com",
-        "http://localhost:5173",
-      ],
+      origin: "https://warehouse-frontend-irof.onrender.com",
       credentials: true,
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
     })
   );
 
-  // JSON body
+  app.options("*", cors());
+
   app.use(express.json({ limit: "5mb" }));
 
-  // Login rate limit
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
   });
 
-  // Authentication
   app.use("/api/auth", authLimiter, authRouter);
 
-  // Organization
   app.use("/api/departments", departmentRouter);
   app.use("/api/centers", centerRouter);
   app.use("/api/employees", employeeRouter);
-
-  // Contracts
   app.use("/api/contracts", contractRouter);
-
-  // Inventory
   app.use("/api/stock", stockRouter);
-
-  // Devices
   app.use("/api/device-assignments", deviceAssignmentRouter);
   app.use("/api/devices", deviceRouter);
-
-  // Suppliers
   app.use("/api/suppliers", supplierRouter);
-
-  // Warehouses
   app.use("/api/warehouses", warehouseRouter);
-
-  // Items
   app.use("/api/items", itemRouter);
-
-  // Warranty
   app.use("/api/warranty", warrantyRouter);
-
-  // Maintenance
   app.use("/api/maintenance", maintenanceRouter);
-
-  // Notifications
   app.use("/api/notifications", notificationRouter);
-
-  // Dashboard
   app.use("/api/dashboard", dashboardRouter);
-
-  // Users & Roles
   app.use("/api/users", userRouter);
   app.use("/api/roles", roleRouter);
-
-  // Audit
   app.use("/api/audit-log", auditLogRouter);
-
-  // Reports
   app.use("/api/reports", reportRouter);
 
-  // Health check
   app.get("/api/health", (_req, res) => {
-    res.json({
-      status: "ok",
-      service: "warehouse-api",
-    });
+    res.json({ status: "ok" });
   });
 
-  // Error handler - must be last
   app.use(errorHandler);
 
   return app;
