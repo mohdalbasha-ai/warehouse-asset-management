@@ -1,0 +1,839 @@
+// ============================================================
+// Warehouse & Asset Management System — Full Database Schema
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// 1. الهيكل التنظيمي — Organizational Structure
+// ============================================================
+
+model Department {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique
+  status      Status   @default(ACTIVE)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  centers     Center[]
+  employees   Employee[]
+  contracts   Contract[]
+  users       User[]
+
+  @@map("departments")
+}
+
+model Center {
+  id            String   @id @default(uuid())
+  name          String
+  code          String   @unique
+  departmentId  String
+  department    Department @relation(fields: [departmentId], references: [id])
+  status        Status   @default(ACTIVE)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  warehouses    Warehouse[]
+  employees     Employee[]
+  contracts     Contract[]
+  users         User[]
+  deviceAssignments DeviceAssignment[]
+
+  @@index([departmentId])
+  @@map("centers")
+}
+
+model Employee {
+  id             String   @id @default(uuid())
+  fullName       String
+  employeeNumber String   @unique
+  jobTitle       String?
+  phone          String?
+  email          String?
+  departmentId   String
+  department     Department @relation(fields: [departmentId], references: [id])
+  centerId       String
+  center         Center   @relation(fields: [centerId], references: [id])
+  status         Status   @default(ACTIVE)
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  transferHistory   EmployeeTransferHistory[]
+  deviceAssignments DeviceAssignment[]
+  maintenanceRequests MaintenanceRequest[]
+
+  @@index([departmentId])
+  @@index([centerId])
+  @@map("employees")
+}
+
+// سجل كامل لحركات نقل الموظف بين المراكز/المديريات — لا يُحذف أبدًا
+model EmployeeTransferHistory {
+  id             String   @id @default(uuid())
+  employeeId     String
+  employee       Employee @relation(fields: [employeeId], references: [id])
+  fromDepartmentId String?
+  fromCenterId   String?
+  toDepartmentId String
+  toCenterId     String
+  transferDate   DateTime @default(now())
+  transferredBy  String   // userId
+  reason         String?
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  @@index([employeeId])
+  @@map("employee_transfer_history")
+}
+
+// ============================================================
+// 2. المستودعات والأصناف — Warehouses & Items
+// ============================================================
+
+model Warehouse {
+  id           String   @id @default(uuid())
+  name         String
+  code         String   @unique
+  centerId     String
+  center       Center   @relation(fields: [centerId], references: [id])
+  managerId    String?  // userId المسؤول
+  location     String?
+  phone        String?
+  status       Status   @default(ACTIVE)
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  stockLevels      StockLevel[]
+  stockReceipts    StockReceipt[]
+  stockIssues      StockIssue[]
+  transfersOut     StockTransfer[] @relation("TransferFrom")
+  transfersIn      StockTransfer[] @relation("TransferTo")
+  devices          Device[]
+  contractDeliveries ContractDelivery[]
+
+  @@index([centerId])
+  @@map("warehouses")
+}
+
+model Item {
+  id              String   @id @default(uuid())
+  itemNumber      String   @unique
+  name            String
+  category        String
+  type            String?
+  unit            String
+  manufacturer    String?
+  model           String?
+  minStock        Int      @default(0)
+  maxStock        Int?
+  reorderPoint    Int?
+  requiresSerial  Boolean  @default(false)
+  isDevice        Boolean  @default(false)
+  isMaintainable  Boolean  @default(false)
+  hasWarranty     Boolean  @default(false)
+  status          Status   @default(ACTIVE)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  stockLevels     StockLevel[]
+  receiptLines    StockReceiptLine[]
+  issueLines      StockIssueLine[]
+  returnLines     StockReturnLine[]
+  transferLines   StockTransferLine[]
+  devices         Device[]
+
+  @@index([category])
+  @@map("items")
+}
+
+// الرصيد المحسوب لكل صنف داخل كل مستودع (يُحدَّث ضمن نفس الـ Transaction الخاصة بكل حركة)
+model StockLevel {
+  id            String   @id @default(uuid())
+  warehouseId   String
+  warehouse     Warehouse @relation(fields: [warehouseId], references: [id])
+  itemId        String
+  item          Item     @relation(fields: [itemId], references: [id])
+  quantity      Int      @default(0)   // الرصيد الفعلي
+  reservedQty   Int      @default(0)   // المحجوز
+  updatedAt     DateTime @updatedAt
+
+  @@unique([warehouseId, itemId])
+  @@index([itemId])
+  @@map("stock_levels")
+}
+
+// ============================================================
+// 3. الموردون والعقود — Suppliers & Contracts
+// ============================================================
+
+model Supplier {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique
+  contactName String?
+  phone       String?
+  email       String?
+  address     String?
+  status      Status   @default(ACTIVE)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contracts   Contract[]
+  stockReceipts StockReceipt[]
+
+  @@map("suppliers")
+}
+
+enum ContractType {
+  SUPPLY
+  MAINTENANCE
+  SUPPLY_AND_MAINTENANCE
+  SERVICES
+  TECHNICAL_SUPPORT
+  WARRANTY
+  OTHER
+}
+
+enum ContractStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  PENDING
+}
+
+model Contract {
+  id              String   @id @default(uuid())
+  contractNumber  String   @unique
+  name            String
+  type            ContractType
+  supplierId      String
+  supplier        Supplier @relation(fields: [supplierId], references: [id])
+  startDate       DateTime
+  endDate         DateTime
+  value           Decimal  @db.Decimal(18, 2)
+  currency        String   @default("JOD")
+  centerId        String?
+  center          Center?  @relation(fields: [centerId], references: [id])
+  departmentId    String?
+  department      Department? @relation(fields: [departmentId], references: [id])
+  responsibleUserId String?
+  terms           String?
+  warrantyPeriodMonths Int?
+  warrantyTerms   String?
+  supplyTerms     String?
+  supplyDurationDays Int?
+  delayTerms      String?
+  delayPenalty    Decimal? @db.Decimal(18, 2)
+  delayPenaltyPercent Decimal? @db.Decimal(5, 2)
+  maxPenalty      Decimal? @db.Decimal(18, 2)
+  status          ContractStatus @default(ACTIVE)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  deliveries      ContractDelivery[]
+  devices         Device[]
+  warranties      Warranty[]
+  maintenanceContracts MaintenanceContract[]
+  maintenanceRequests MaintenanceRequest[]
+  attachments     Attachment[] @relation("ContractAttachments")
+
+  @@index([supplierId])
+  @@index([status])
+  @@map("contracts")
+}
+
+enum DeliveryStatus {
+  NOT_STARTED
+  DUE_SOON
+  DELAYED
+  DELIVERED
+  RECEIVED
+  PARTIALLY_RECEIVED
+  CANCELLED
+}
+
+model ContractDelivery {
+  id              String   @id @default(uuid())
+  batchNumber     String
+  contractId      String
+  contract        Contract @relation(fields: [contractId], references: [id])
+  description     String?
+  quantity        Int
+  value           Decimal? @db.Decimal(18, 2)
+  agreedDate      DateTime  // تاريخ التوريد المتفق عليه
+  actualDate      DateTime? // تاريخ الاستلام الفعلي
+  status          DeliveryStatus @default(NOT_STARTED)
+  warehouseId     String?
+  warehouse       Warehouse? @relation(fields: [warehouseId], references: [id])
+  createdByUserId String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  attachments     Attachment[] @relation("DeliveryAttachments")
+  devices         Device[]
+
+  @@index([contractId])
+  @@index([status])
+  @@map("contract_deliveries")
+  // ملاحظة: عدد أيام التأخير يُحسب في Service Layer وليس مخزنًا (مشتق دائمًا):
+  // إن لم يُستلم: today - agreedDate  |  إن استُلم: actualDate - agreedDate
+}
+
+// ============================================================
+// 4. الأجهزة — Devices
+// ============================================================
+
+enum DeviceStatus {
+  NEW
+  IN_WAREHOUSE
+  DELIVERED
+  IN_USE
+  UNDER_MAINTENANCE
+  FAULTY
+  OUT_OF_SERVICE
+  RETURNED
+  LOST
+  DAMAGED
+}
+
+model Device {
+  id                String   @id @default(uuid())
+  internalNumber    String   @unique
+  itemId            String
+  item              Item     @relation(fields: [itemId], references: [id])
+  deviceType        String?
+  name              String
+  manufacturer      String?
+  model             String?
+  serialNumber      String   @unique
+  assetNumber       String?  @unique
+  purchaseDate      DateTime?
+  receivedDate      DateTime?
+  supplierId        String?
+  contractId        String?
+  contract          Contract? @relation(fields: [contractId], references: [id])
+  contractDeliveryId String?
+  contractDelivery  ContractDelivery? @relation(fields: [contractDeliveryId], references: [id])
+  warehouseId       String?
+  warehouse         Warehouse? @relation(fields: [warehouseId], references: [id])
+  centerId          String?
+  currentEmployeeId String?   // الموظف المستخدم حاليًا (مشتق أيضًا من آخر Assignment فعّال)
+  status            DeviceStatus @default(NEW)
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  warranty          Warranty?
+  assignments       DeviceAssignment[]
+  maintenanceRequests MaintenanceRequest[]
+  attachments       Attachment[] @relation("DeviceAttachments")
+
+  @@index([contractId])
+  @@index([warehouseId])
+  @@index([status])
+  @@map("devices")
+}
+
+// تسليم/إرجاع الجهاز — سجل تاريخي كامل، لا يُحدَّث بل تُضاف سجلات جديدة
+enum AssignmentAction {
+  ISSUE   // تسليم
+  RETURN  // إرجاع
+}
+
+model DeviceAssignment {
+  id             String   @id @default(uuid())
+  deviceId       String
+  device         Device   @relation(fields: [deviceId], references: [id])
+  employeeId     String
+  employee       Employee @relation(fields: [employeeId], references: [id])
+  centerId       String?
+  center         Center?  @relation(fields: [centerId], references: [id])
+  action         AssignmentAction
+  date           DateTime @default(now())
+  performedByUserId String
+  conditionAtEvent String?   // حالة الجهاز عند التسليم/الإرجاع
+  meterReading   String?
+  returnReason   String?
+  recipientSignature String?
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  attachments    Attachment[] @relation("AssignmentAttachments")
+
+  @@index([deviceId])
+  @@index([employeeId])
+  @@map("device_assignments")
+}
+
+// ============================================================
+// 5. حركات المستودع — Stock Movements
+// ============================================================
+
+model StockReceipt {
+  id            String   @id @default(uuid())
+  receiptNumber String   @unique
+  date          DateTime @default(now())
+  supplierId    String?
+  supplier      Supplier? @relation(fields: [supplierId], references: [id])
+  contractId    String?
+  warehouseId   String
+  warehouse     Warehouse @relation(fields: [warehouseId], references: [id])
+  performedByUserId String
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  lines         StockReceiptLine[]
+  attachments   Attachment[] @relation("ReceiptAttachments")
+
+  @@index([warehouseId])
+  @@map("stock_receipts")
+}
+
+model StockReceiptLine {
+  id            String   @id @default(uuid())
+  receiptId     String
+  receipt       StockReceipt @relation(fields: [receiptId], references: [id])
+  itemId        String
+  item          Item     @relation(fields: [itemId], references: [id])
+  quantity      Int
+  serialNumber  String?
+  unitPrice     Decimal? @db.Decimal(18, 2)
+  total         Decimal? @db.Decimal(18, 2)
+
+  @@index([itemId])
+  @@map("stock_receipt_lines")
+}
+
+model StockIssue {
+  id            String   @id @default(uuid())
+  issueNumber   String   @unique
+  date          DateTime @default(now())
+  warehouseId   String
+  warehouse     Warehouse @relation(fields: [warehouseId], references: [id])
+  recipientEmployeeId String?
+  reason        String?
+  contractId    String?
+  performedByUserId String
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  lines         StockIssueLine[]
+  attachments   Attachment[] @relation("IssueAttachments")
+
+  @@index([warehouseId])
+  @@map("stock_issues")
+}
+
+model StockIssueLine {
+  id            String   @id @default(uuid())
+  issueId       String
+  issue         StockIssue @relation(fields: [issueId], references: [id])
+  itemId        String
+  item          Item     @relation(fields: [itemId], references: [id])
+  quantity      Int
+  serialNumber  String?
+
+  @@index([itemId])
+  @@map("stock_issue_lines")
+}
+
+model StockReturn {
+  id            String   @id @default(uuid())
+  returnNumber  String   @unique
+  date          DateTime @default(now())
+  reason        String?
+  partyName     String?
+  performedByUserId String
+  createdAt     DateTime @default(now())
+
+  lines         StockReturnLine[]
+
+  @@map("stock_returns")
+}
+
+model StockReturnLine {
+  id            String   @id @default(uuid())
+  returnId      String
+  stockReturn   StockReturn @relation(fields: [returnId], references: [id])
+  itemId        String
+  item          Item     @relation(fields: [itemId], references: [id])
+  quantity      Int
+  serialNumber  String?
+
+  @@index([itemId])
+  @@map("stock_return_lines")
+}
+
+enum TransferStatus {
+  PENDING
+  IN_TRANSIT
+  RECEIVED
+  CANCELLED
+}
+
+model StockTransfer {
+  id            String   @id @default(uuid())
+  transferNumber String  @unique
+  fromWarehouseId String
+  fromWarehouse Warehouse @relation("TransferFrom", fields: [fromWarehouseId], references: [id])
+  toWarehouseId String
+  toWarehouse   Warehouse @relation("TransferTo", fields: [toWarehouseId], references: [id])
+  date          DateTime @default(now())
+  status        TransferStatus @default(PENDING)
+  performedByUserId String
+  receivedByUserId String?
+  receivedDate  DateTime?
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  lines         StockTransferLine[]
+
+  @@index([fromWarehouseId])
+  @@index([toWarehouseId])
+  @@map("stock_transfers")
+}
+
+model StockTransferLine {
+  id            String   @id @default(uuid())
+  transferId    String
+  transfer      StockTransfer @relation(fields: [transferId], references: [id])
+  itemId        String
+  item          Item     @relation(fields: [itemId], references: [id])
+  quantity      Int
+  serialNumber  String?
+
+  @@index([itemId])
+  @@map("stock_transfer_lines")
+}
+
+// ============================================================
+// 6. الضمان والصيانة — Warranty & Maintenance
+// ============================================================
+
+model Warranty {
+  id            String   @id @default(uuid())
+  deviceId      String   @unique
+  device        Device   @relation(fields: [deviceId], references: [id])
+  supplierId    String?
+  contractId    String?
+  contract      Contract? @relation(fields: [contractId], references: [id])
+  startDate     DateTime
+  endDate       DateTime
+  terms         String?
+  isActive      Boolean  @default(true)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("warranties")
+}
+
+model MaintenanceContract {
+  id            String   @id @default(uuid())
+  contractId    String
+  contract      Contract @relation(fields: [contractId], references: [id])
+  coverageTerms String?
+  startDate     DateTime
+  endDate       DateTime
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  @@index([contractId])
+  @@map("maintenance_contracts")
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum CoverageType {
+  WARRANTY
+  MAINTENANCE_CONTRACT
+  OUT_OF_COVERAGE
+}
+
+enum MaintenanceStatus {
+  NEW
+  RECEIVED
+  INSPECTING
+  COVERAGE_DETERMINED
+  AWAITING_APPROVAL
+  APPROVED
+  REJECTED
+  SENT_FOR_REPAIR
+  IN_REPAIR
+  REPAIRED
+  POST_CHECK
+  DELIVERED_TO_USER
+  CLOSED
+}
+
+model MaintenanceRequest {
+  id              String   @id @default(uuid())
+  requestNumber   String   @unique
+  deviceId        String
+  device          Device   @relation(fields: [deviceId], references: [id])
+  employeeId      String
+  employee        Employee @relation(fields: [employeeId], references: [id])
+  requestDate     DateTime @default(now())
+  issue           String
+  faultDescription String?
+  priority        Priority @default(MEDIUM)
+  status          MaintenanceStatus @default(NEW)
+  coverageType    CoverageType?
+  contractId      String?
+  contract        Contract? @relation(fields: [contractId], references: [id])
+  executingCompany String?
+  receivedForRepairDate DateTime?
+  returnDate      DateTime?
+  cost            Decimal? @db.Decimal(18, 2)
+  approvalRequired Boolean @default(false)
+  approvedByUserId String?
+  approvalDate    DateTime?
+  quoteAmount     Decimal? @db.Decimal(18, 2)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  actions         MaintenanceAction[]
+  attachments     Attachment[] @relation("MaintenanceAttachments")
+
+  @@index([deviceId])
+  @@index([status])
+  @@map("maintenance_requests")
+}
+
+// سجل مراحل دورة الصيانة — كل مرحلة ومن قام بها ومتى (Workflow History)
+model MaintenanceAction {
+  id            String   @id @default(uuid())
+  requestId     String
+  request       MaintenanceRequest @relation(fields: [requestId], references: [id])
+  stage         MaintenanceStatus
+  performedByUserId String
+  date          DateTime @default(now())
+  notes         String?
+
+  @@index([requestId])
+  @@map("maintenance_actions")
+}
+
+// ============================================================
+// 7. المستخدمون والصلاحيات — Users, Roles, Permissions (RBAC)
+// ============================================================
+
+model User {
+  id            String   @id @default(uuid())
+  fullName      String
+  employeeNumber String? @unique
+  username      String   @unique
+  email         String   @unique
+  passwordHash  String
+  phone         String?
+  departmentId  String?
+  department    Department? @relation(fields: [departmentId], references: [id])
+  centerId      String?
+  center        Center?  @relation(fields: [centerId], references: [id])
+  jobTitle      String?
+  status        Status   @default(ACTIVE)
+  lastLoginAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  roles         UserRole[]
+  scopes        UserScope[]
+  notifications Notification[]
+
+  @@index([departmentId])
+  @@index([centerId])
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique   // Super Admin, مدير المستودعات, أمين مستودع ...
+  description String?
+  createdAt   DateTime @default(now())
+
+  users       UserRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+enum PermissionAction {
+  VIEW
+  CREATE
+  EDIT
+  DELETE
+  APPROVE
+  REJECT
+  EXPORT
+  PRINT
+  RECEIVE
+  ISSUE
+  TRANSFER
+  MAINTENANCE
+  CONTRACTS
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  resource    String   // e.g. "devices", "contracts", "stock"
+  action      PermissionAction
+
+  roles       RolePermission[]
+
+  @@unique([resource, action])
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  role         Role     @relation(fields: [roleId], references: [id])
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+  roleId  String
+  role    Role   @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+// نطاق صلاحية المستخدم: يحدد أي مديريات/مراكز/مستودعات يمكنه رؤية بياناتها
+model UserScope {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  departmentId  String?
+  centerId      String?
+  warehouseId   String?
+
+  @@index([userId])
+  @@map("user_scopes")
+}
+
+// ============================================================
+// 8. الإشعارات — Notifications
+// ============================================================
+
+enum NotificationType {
+  CONTRACT_EXPIRING
+  CONTRACT_EXPIRED
+  WARRANTY_EXPIRING
+  DELIVERY_DUE_SOON
+  DELIVERY_DELAYED
+  MAINTENANCE_NEW
+  MAINTENANCE_URGENT
+  MAINTENANCE_DELAYED
+  STOCK_LOW
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  type        NotificationType
+  message     String
+  priority    Priority @default(MEDIUM)
+  isRead      Boolean  @default(false)
+  relatedEntityType String?
+  relatedEntityId   String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+// ============================================================
+// 9. المرفقات — Attachments (Polymorphic-style via relation tables)
+// ============================================================
+
+model Attachment {
+  id           String   @id @default(uuid())
+  fileName     String
+  fileType     String
+  filePath     String
+  uploadedByUserId String
+  uploadedAt   DateTime @default(now())
+
+  contractId   String?
+  contract     Contract? @relation("ContractAttachments", fields: [contractId], references: [id])
+  deliveryId   String?
+  delivery     ContractDelivery? @relation("DeliveryAttachments", fields: [deliveryId], references: [id])
+  deviceId     String?
+  device       Device?  @relation("DeviceAttachments", fields: [deviceId], references: [id])
+  assignmentId String?
+  assignment   DeviceAssignment? @relation("AssignmentAttachments", fields: [assignmentId], references: [id])
+  receiptId    String?
+  receipt      StockReceipt? @relation("ReceiptAttachments", fields: [receiptId], references: [id])
+  issueId      String?
+  issue        StockIssue? @relation("IssueAttachments", fields: [issueId], references: [id])
+  maintenanceRequestId String?
+  maintenanceRequest MaintenanceRequest? @relation("MaintenanceAttachments", fields: [maintenanceRequestId], references: [id])
+
+  @@map("attachments")
+}
+
+// ============================================================
+// 10. سجل العمليات — Audit Log (غير قابل للحذف من المستخدمين العاديين)
+// ============================================================
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  action      String   // CREATE / UPDATE / DELETE / APPROVE ...
+  entity      String   // اسم الجدول/الكيان
+  entityId    String?
+  screen      String?
+  oldData     Json?
+  newData     Json?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@map("audit_logs")
+}
+
+// ============================================================
+// Shared Enums
+// ============================================================
+
+enum Status {
+  ACTIVE
+  INACTIVE
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
