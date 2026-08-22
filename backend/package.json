@@ -2,11 +2,11 @@
   "name": "warehouse-asset-management-backend",
   "version": "0.1.0",
   "description": "Warehouse & Asset Management System - Backend API",
-  "main": "dist/server.js",
+  "main": "dist/src/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "ts-node prisma/seed.ts",
@@ -22,7 +22,7 @@
     "jsonwebtoken": "^9.0.2",
     "express-rate-limit": "^7.4.0",
     "multer": "^1.4.5-lts.1",
-    "node-cron": "^3.0.3",
+    "node-cron": "^3.0.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
