@@ -1,4 +1,3 @@
-```tsx
 import { createContext, useContext, useState, ReactNode } from "react";
 import { api } from "../api/client";
 
@@ -29,13 +28,16 @@ function getStoredUser(): AuthUser | null {
     const parsed = JSON.parse(raw);
 
     if (!parsed || typeof parsed !== "object") {
-      localStorage.removeItem("user");
       return null;
     }
 
     return parsed as AuthUser;
   } catch {
+    // إذا كانت البيانات المخزنة تالفة، نحذفها ولا نوقف الموقع
     localStorage.removeItem("user");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+
     return null;
   }
 }
@@ -97,4 +99,3 @@ export function useAuth() {
 
   return ctx;
 }
-```
