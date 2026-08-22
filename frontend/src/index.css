@@ -2,31 +2,85 @@
 @tailwind components;
 @tailwind utilities;
 
-html[dir="rtl"] body {
-  font-family: "Segoe UI", Tahoma, sans-serif;
+:root {
+  color-scheme: light;
 }
-html[dir="ltr"] body {
-  font-family: "Inter", system-ui, sans-serif;
-}
+
+html[dir="rtl"] body { font-family: "IBM Plex Sans Arabic", "Tajawal", sans-serif; }
+html[dir="ltr"] body { font-family: "IBM Plex Sans", "Inter", system-ui, sans-serif; }
 
 body {
-  @apply bg-gray-50 text-gray-900;
+  @apply bg-paper text-ink-900;
+  -webkit-font-smoothing: antialiased;
 }
 
-.badge {
-  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
-}
-.badge-normal { @apply bg-green-100 text-green-800; }
-.badge-warning { @apply bg-yellow-100 text-yellow-800; }
-.badge-danger { @apply bg-orange-100 text-orange-800; }
-.badge-severe { @apply bg-red-100 text-red-800; }
-.badge-expired { @apply bg-red-200 text-red-900; }
+h1, h2, h3, .font-display { font-family: "Tajawal", "IBM Plex Sans Arabic", sans-serif; }
 
-.card { @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4; }
-.btn { @apply px-3 py-1.5 rounded-md text-sm font-medium transition; }
-.btn-primary { @apply bg-primary-600 text-white hover:bg-primary-700; }
-.btn-secondary { @apply bg-gray-100 text-gray-700 hover:bg-gray-200; }
-.input { @apply border border-gray-300 rounded-md px-3 py-1.5 text-sm w-full focus:outline-none focus:ring-2 focus:ring-primary-400; }
-table.data-table { @apply w-full text-sm; }
-table.data-table th { @apply text-start px-3 py-2 bg-gray-100 font-semibold text-gray-600; }
-table.data-table td { @apply px-3 py-2 border-t border-gray-100; }
+*:focus-visible {
+  outline: 2px solid theme("colors.petrol.500");
+  outline-offset: 2px;
+}
+
+/* ===== شارات الحالة (Status Badges) ===== */
+.badge { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium; }
+.badge-normal  { @apply bg-success-50 text-success-600; }
+.badge-warning { @apply bg-amber-50 text-amber-600; }
+.badge-danger  { @apply bg-amber-100 text-amber-600; }
+.badge-severe  { @apply bg-danger-50 text-danger-600; }
+.badge-expired { @apply bg-danger-50 text-danger-600; }
+
+/* ===== العنصر المميز: بطاقة الصنف (Asset Tag) ===== */
+/* تحاكي بطاقات التعريف الفيزيائية المعلّقة على المستودعات والأجهزة: ثقب تعليق + نص Mono */
+.asset-tag {
+  @apply inline-flex items-center gap-1.5 rounded-md border border-steel-300 bg-white
+         ps-1.5 pe-2 py-0.5 font-mono text-xs text-ink-700 shadow-sm;
+}
+.asset-tag::before {
+  content: "";
+  @apply block w-2 h-2 rounded-full bg-paper border border-steel-300;
+}
+
+/* ===== الشريط الجانبي الدال على الحالة على البطاقات/الصفوف ===== */
+.status-rail { @apply border-e-4; }
+.status-rail-normal  { @apply border-e-success-500; }
+.status-rail-warning { @apply border-e-amber-400; }
+.status-rail-danger  { @apply border-e-danger-500; }
+.status-rail-neutral { @apply border-e-steel-300; }
+
+/* ===== البطاقات ===== */
+.card {
+  @apply bg-white rounded-xl border border-steel-200 shadow-card p-4;
+}
+.stat-card {
+  @apply bg-white rounded-xl border border-steel-200 shadow-card p-4 flex items-start gap-3;
+}
+.stat-icon {
+  @apply w-10 h-10 rounded-lg flex items-center justify-center shrink-0;
+}
+
+/* ===== الأزرار ===== */
+.btn { @apply inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed; }
+.btn-primary   { @apply bg-petrol-500 text-white hover:bg-petrol-600 shadow-sm; }
+.btn-secondary { @apply bg-white text-ink-700 border border-steel-300 hover:bg-steel-100; }
+.btn-danger    { @apply bg-danger-50 text-danger-600 hover:bg-danger-100; }
+.btn-ghost     { @apply text-ink-700 hover:bg-steel-100; }
+
+/* ===== الحقول ===== */
+.input {
+  @apply border border-steel-300 rounded-lg px-3 py-2 text-sm w-full bg-white
+         placeholder:text-steel-500 focus:outline-none focus:ring-2 focus:ring-petrol-400 focus:border-petrol-400;
+}
+label.field-label { @apply block text-xs font-medium text-steel-500 mb-1; }
+
+/* ===== الجداول ===== */
+table.data-table { @apply w-full text-sm border-separate border-spacing-0; }
+table.data-table thead th {
+  @apply text-start px-3 py-2.5 bg-steel-100 font-semibold text-ink-700 text-xs uppercase tracking-wide;
+}
+table.data-table thead th:first-child { @apply rounded-s-lg; }
+table.data-table thead th:last-child { @apply rounded-e-lg; }
+table.data-table tbody td { @apply px-3 py-3 border-b border-steel-100; }
+table.data-table tbody tr:hover td { @apply bg-petrol-50/40; }
+
+/* ===== حالة فارغة (Empty state) ===== */
+.empty-state { @apply flex flex-col items-center justify-center gap-2 py-12 text-steel-500; }

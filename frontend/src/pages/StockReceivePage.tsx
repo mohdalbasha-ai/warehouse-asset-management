@@ -45,9 +45,9 @@ export default function StockReceivePage() {
 
   return (
     <div className="space-y-4 max-w-2xl">
-      <h1 className="text-xl font-bold">الاستلام (التوريد)</h1>
-      {message && <div className="bg-green-50 text-green-700 p-3 rounded text-sm">{message}</div>}
-      {error && <div className="bg-red-50 text-red-700 p-3 rounded text-sm">{error}</div>}
+      <h1 className="font-display text-xl font-bold text-ink-900">الاستلام (التوريد)</h1>
+      {message && <div className="bg-success-50 text-success-600 p-3 rounded text-sm">{message}</div>}
+      {error && <div className="bg-danger-50 text-danger-600 p-3 rounded text-sm">{error}</div>}
 
       <div className="card space-y-3">
         <input className="input" placeholder="رقم سند التوريد" value={form.receiptNumber} onChange={(e) => setForm({ ...form, receiptNumber: e.target.value })} />

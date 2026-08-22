@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import DataTable from "../components/DataTable";
 import Modal from "../components/Modal";
+import { Plus } from "lucide-react";
 
 interface Warehouse { id: string; name: string; code: string; center?: { name: string }; location?: string; }
 interface Center { id: string; name: string; }
@@ -28,8 +29,9 @@ export default function WarehousesPage() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">المستودعات</h1>
-        <button className="btn btn-primary" onClick={() => setShow(true)}>+ مستودع جديد</button>
+        <h1 className="font-display text-xl font-bold text-ink-900">المستودعات</h1>
+        <button className="btn btn-primary" onClick={() => setShow(true)}>
+          <Plus className="w-4 h-4" /> مستودع جديد</button>
       </div>
       <div className="card">
         <DataTable

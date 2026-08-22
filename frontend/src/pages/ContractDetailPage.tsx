@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../api/client";
 import Modal from "../components/Modal";
+import AttachmentsPanel from "../components/AttachmentsPanel";
+import { Plus } from "lucide-react";
 
 export default function ContractDetailPage() {
   const { id } = useParams();
@@ -28,8 +30,9 @@ export default function ContractDetailPage() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">دفعات التوريد الخاصة بالعقد</h1>
-        <button className="btn btn-primary" onClick={() => setShow(true)}>+ دفعة جديدة</button>
+        <h1 className="font-display text-xl font-bold text-ink-900">دفعات التوريد الخاصة بالعقد</h1>
+        <button className="btn btn-primary" onClick={() => setShow(true)}>
+          <Plus className="w-4 h-4" /> دفعة جديدة</button>
       </div>
       <div className="card">
         <table className="data-table">
@@ -40,14 +43,16 @@ export default function ContractDetailPage() {
                 <td>{d.batchNumber}</td>
                 <td>{new Date(d.agreedDate).toLocaleDateString()}</td>
                 <td>{d.actualDate ? new Date(d.actualDate).toLocaleDateString() : "-"}</td>
-                <td className={d.isDelayed ? "text-red-600 font-bold" : ""}>{d.delayDays}</td>
+                <td className={d.isDelayed ? "text-danger-600 font-bold" : ""}>{d.delayDays}</td>
                 <td><span className="badge badge-normal">{d.computedStatus}</span></td>
               </tr>
             ))}
-            {deliveries.length === 0 && <tr><td colSpan={5} className="text-center text-gray-400 py-4">لا توجد دفعات</td></tr>}
+            {deliveries.length === 0 && <tr><td colSpan={5} className="text-center text-steel-500 py-4">لا توجد دفعات</td></tr>}
           </tbody>
         </table>
       </div>
+
+      {id && <AttachmentsPanel entityType="contract" entityId={id} />}
     </div>
   );
 }

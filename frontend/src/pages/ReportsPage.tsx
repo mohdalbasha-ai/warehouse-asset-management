@@ -24,7 +24,7 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold">التقارير</h1>
+      <h1 className="font-display text-xl font-bold text-ink-900">التقارير</h1>
       <div className="grid md:grid-cols-3 gap-4">
         {REPORTS.map((r) => (
           <div key={r.key} className="card flex flex-col justify-between">

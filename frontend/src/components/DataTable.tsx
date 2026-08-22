@@ -23,7 +23,7 @@ export default function DataTable<T extends { id: string }>({ columns, rows, emp
         ))}
         {rows.length === 0 && (
           <tr>
-            <td colSpan={columns.length} className="text-center text-gray-400 py-4">
+            <td colSpan={columns.length} className="text-center text-steel-500 py-4">
               {emptyText ?? "لا توجد بيانات"}
             </td>
           </tr>

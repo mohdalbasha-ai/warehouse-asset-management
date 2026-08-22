@@ -4,10 +4,10 @@ import bcrypt from "bcrypt";
 const prisma = new PrismaClient();
 
 const RESOURCES = [
-  "departments", "centers", "warehouses", "employees", "items", "devices",
+  "departments", "centers", "idarat", "aqsam", "warehouses", "employees", "items", "devices",
   "device-assignments", "stock", "contracts", "contract-deliveries",
   "maintenance", "warranty", "suppliers", "users", "roles", "reports",
-  "audit-log", "notifications", "dashboard",
+  "audit-log", "notifications", "dashboard", "attachments",
 ];
 
 const ACTIONS: PermissionAction[] = [

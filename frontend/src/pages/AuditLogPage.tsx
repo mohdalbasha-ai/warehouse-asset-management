@@ -12,7 +12,7 @@ export default function AuditLogPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold">سجل العمليات</h1>
+      <h1 className="font-display text-xl font-bold text-ink-900">سجل العمليات</h1>
       <div className="card">
         <table className="data-table">
           <thead><tr><th>العملية</th><th>الكيان</th><th>المسار</th><th>التاريخ والوقت</th></tr></thead>
@@ -21,11 +21,11 @@ export default function AuditLogPage() {
               <tr key={l.id}>
                 <td>{l.action}</td>
                 <td>{l.entity}</td>
-                <td className="text-xs text-gray-500">{l.screen}</td>
+                <td className="text-xs text-steel-500">{l.screen}</td>
                 <td>{new Date(l.createdAt).toLocaleString()}</td>
               </tr>
             ))}
-            {logs.length === 0 && <tr><td colSpan={4} className="text-center text-gray-400 py-4">لا يوجد سجل</td></tr>}
+            {logs.length === 0 && <tr><td colSpan={4} className="text-center text-steel-500 py-4">لا يوجد سجل</td></tr>}
           </tbody>
         </table>
       </div>

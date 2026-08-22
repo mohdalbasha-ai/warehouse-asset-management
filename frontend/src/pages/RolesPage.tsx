@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import Modal from "../components/Modal";
+import { Plus } from "lucide-react";
 
 interface Permission { id: string; resource: string; action: string; }
 interface Role { id: string; name: string; permissions: { permission: Permission }[]; }
@@ -35,15 +36,16 @@ export default function RolesPage() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">الأدوار والصلاحيات</h1>
-        <button className="btn btn-primary" onClick={() => setShow(true)}>+ دور جديد</button>
+        <h1 className="font-display text-xl font-bold text-ink-900">الأدوار والصلاحيات</h1>
+        <button className="btn btn-primary" onClick={() => setShow(true)}>
+          <Plus className="w-4 h-4" /> دور جديد</button>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
         {roles.map((r) => (
           <div key={r.id} className="card">
             <div className="font-semibold mb-2">{r.name}</div>
-            <div className="text-xs text-gray-500">{r.permissions.length} صلاحية</div>
+            <div className="text-xs text-steel-500">{r.permissions.length} صلاحية</div>
           </div>
         ))}
       </div>

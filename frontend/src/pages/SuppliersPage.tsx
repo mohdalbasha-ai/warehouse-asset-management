@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import DataTable from "../components/DataTable";
 import Modal from "../components/Modal";
+import { Plus } from "lucide-react";
 
 interface Supplier { id: string; name: string; code: string; phone?: string; email?: string; }
 
@@ -23,8 +24,9 @@ export default function SuppliersPage() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">الموردون</h1>
-        <button className="btn btn-primary" onClick={() => setShow(true)}>+ مورد جديد</button>
+        <h1 className="font-display text-xl font-bold text-ink-900">الموردون</h1>
+        <button className="btn btn-primary" onClick={() => setShow(true)}>
+          <Plus className="w-4 h-4" /> مورد جديد</button>
       </div>
       <div className="card">
         <DataTable

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import DataTable from "../components/DataTable";
 import Modal from "../components/Modal";
+import { Plus } from "lucide-react";
 
 interface Employee { id: string; fullName: string; employeeNumber: string; department: { name: string }; center: { name: string }; }
 interface Department { id: string; name: string; }
@@ -40,8 +41,9 @@ export default function EmployeesPage() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">الموظفين</h1>
-        <button className="btn btn-primary" onClick={() => setShowAdd(true)}>+ موظف جديد</button>
+        <h1 className="font-display text-xl font-bold text-ink-900">الموظفين</h1>
+        <button className="btn btn-primary" onClick={() => setShowAdd(true)}>
+          <Plus className="w-4 h-4" /> موظف جديد</button>
       </div>
 
       <div className="card">

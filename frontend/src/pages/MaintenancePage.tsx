@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import Modal from "../components/Modal";
+import { Plus } from "lucide-react";
 
 interface MaintenanceRequest {
   id: string; requestNumber: string; issue: string; status: string; priority: string;
@@ -59,8 +60,9 @@ export default function MaintenancePage() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">طلبات الصيانة</h1>
-        <button className="btn btn-primary" onClick={() => setShow(true)}>+ طلب صيانة جديد</button>
+        <h1 className="font-display text-xl font-bold text-ink-900">طلبات الصيانة</h1>
+        <button className="btn btn-primary" onClick={() => setShow(true)}>
+          <Plus className="w-4 h-4" /> طلب صيانة جديد</button>
       </div>
 
       <div className="card">
@@ -90,7 +92,7 @@ export default function MaintenancePage() {
                 </td>
               </tr>
             ))}
-            {requests.length === 0 && <tr><td colSpan={6} className="text-center text-gray-400 py-4">لا توجد طلبات</td></tr>}
+            {requests.length === 0 && <tr><td colSpan={6} className="text-center text-steel-500 py-4">لا توجد طلبات</td></tr>}
           </tbody>
         </table>
       </div>

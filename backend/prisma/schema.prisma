@@ -15,14 +15,30 @@ datasource db {
 // 1. الهيكل التنظيمي — Organizational Structure
 // ============================================================
 
+model Idara {
+  id              String   @id @default(uuid())
+  name            String
+  code            String   @unique
+  status          Status   @default(ACTIVE)
+  notes           String?
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  centers         Center[]
+
+  @@map("idarat")
+}
+
 model Department {
-  id          String   @id @default(uuid())
-  name        String
-  code        String   @unique
-  status      Status   @default(ACTIVE)
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(uuid())
+  name            String
+  code            String   @unique
+  status          Status   @default(ACTIVE)
+  notes           String?
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   centers     Center[]
   employees   Employee[]
@@ -32,14 +48,35 @@ model Department {
   @@map("departments")
 }
 
+model Qism {
+  id              String   @id @default(uuid())
+  name            String
+  code            String   @unique
+  status          Status   @default(ACTIVE)
+  notes           String?
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  centers         Center[]
+
+  @@map("aqsam")
+}
+
+// المركز يتكوّن دائمًا من ثلاثة عناصر: إدارة + مديرية + قسم
 model Center {
   id            String   @id @default(uuid())
   name          String
   code          String   @unique
+  idaraId       String
+  idara         Idara      @relation(fields: [idaraId], references: [id])
   departmentId  String
   department    Department @relation(fields: [departmentId], references: [id])
+  qismId        String
+  qism          Qism       @relation(fields: [qismId], references: [id])
   status        Status   @default(ACTIVE)
   notes         String?
+  createdByUserId String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -49,7 +86,9 @@ model Center {
   users         User[]
   deviceAssignments DeviceAssignment[]
 
+  @@index([idaraId])
   @@index([departmentId])
+  @@index([qismId])
   @@map("centers")
 }
 

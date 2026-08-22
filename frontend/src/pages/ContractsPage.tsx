@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import RiskBadge from "../components/RiskBadge";
 import Modal from "../components/Modal";
+import AssetTag from "../components/AssetTag";
+import EmptyState from "../components/EmptyState";
+import { Plus, FileText } from "lucide-react";
 
 interface Contract {
   id: string; contractNumber: string; name: string; type: string; status: string;
@@ -36,10 +39,16 @@ export default function ContractsPage() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">العقود</h1>
-        <button className="btn btn-primary" onClick={() => setShow(true)}>+ عقد جديد</button>
+        <div>
+          <h1 className="font-display text-xl font-bold text-ink-900">العقود</h1>
+          <p className="text-sm text-steel-500">{contracts.length} عقد مسجّل</p>
+        </div>
+        <button className="btn btn-primary" onClick={() => setShow(true)}><Plus className="w-4 h-4" /> عقد جديد</button>
       </div>
       <div className="card">
+        {contracts.length === 0 ? (
+          <EmptyState icon={FileText} title="لا توجد عقود بعد" hint="أضف أول عقد لبدء تتبع التوريد والصيانة" />
+        ) : (
         <table className="data-table">
           <thead>
             <tr><th>رقم العقد</th><th>الاسم</th><th>النوع</th><th>المورد</th><th>تاريخ النهاية</th><th>الأيام المتبقية</th><th>الحالة</th></tr>
@@ -47,8 +56,8 @@ export default function ContractsPage() {
           <tbody>
             {contracts.map((c) => (
               <tr key={c.id}>
-                <td><Link className="text-primary-600 underline" to={`/contracts/${c.id}`}>{c.contractNumber}</Link></td>
-                <td>{c.name}</td>
+                <td><Link to={`/contracts/${c.id}`}><AssetTag>{c.contractNumber}</AssetTag></Link></td>
+                <td className="font-medium">{c.name}</td>
                 <td>{TYPE_LABELS[c.type] ?? c.type}</td>
                 <td>{c.supplier?.name}</td>
                 <td>{new Date(c.endDate).toLocaleDateString()}</td>
@@ -56,9 +65,9 @@ export default function ContractsPage() {
                 <td><RiskBadge level={c.riskLevel} /></td>
               </tr>
             ))}
-            {contracts.length === 0 && <tr><td colSpan={7} className="text-center text-gray-400 py-4">لا توجد عقود</td></tr>}
           </tbody>
         </table>
+        )}
       </div>
 
       {show && (

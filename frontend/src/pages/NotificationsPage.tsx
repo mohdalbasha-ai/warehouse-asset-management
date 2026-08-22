@@ -22,7 +22,7 @@ export default function NotificationsPage() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">الإشعارات</h1>
+        <h1 className="font-display text-xl font-bold text-ink-900">الإشعارات</h1>
         <button className="btn btn-secondary" onClick={markAllRead}>تحديد الكل كمقروء</button>
       </div>
       <div className="card divide-y">
@@ -30,12 +30,12 @@ export default function NotificationsPage() {
           <div key={n.id} className={`py-3 flex justify-between items-center ${n.isRead ? "opacity-60" : ""}`}>
             <div>
               <div className="text-sm">{n.message}</div>
-              <div className="text-xs text-gray-400">{new Date(n.createdAt).toLocaleString()}</div>
+              <div className="text-xs text-steel-500">{new Date(n.createdAt).toLocaleString()}</div>
             </div>
             {!n.isRead && <button className="btn btn-secondary" onClick={() => markRead(n.id)}>تمت القراءة</button>}
           </div>
         ))}
-        {notifications.length === 0 && <div className="text-center text-gray-400 py-8">لا توجد إشعارات</div>}
+        {notifications.length === 0 && <div className="text-center text-steel-500 py-8">لا توجد إشعارات</div>}
       </div>
     </div>
   );

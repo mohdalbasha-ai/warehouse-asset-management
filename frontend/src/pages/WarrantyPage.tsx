@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import Modal from "../components/Modal";
+import { Plus } from "lucide-react";
 
 interface Warranty { id: string; startDate: string; endDate: string; isActive: boolean; device: { name: string; serialNumber: string }; }
 
@@ -25,8 +26,9 @@ export default function WarrantyPage() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">الضمان</h1>
-        <button className="btn btn-primary" onClick={() => setShow(true)}>+ ضمان جديد</button>
+        <h1 className="font-display text-xl font-bold text-ink-900">الضمان</h1>
+        <button className="btn btn-primary" onClick={() => setShow(true)}>
+          <Plus className="w-4 h-4" /> ضمان جديد</button>
       </div>
       <div className="card">
         <table className="data-table">
@@ -44,7 +46,7 @@ export default function WarrantyPage() {
                 </td>
               </tr>
             ))}
-            {warranties.length === 0 && <tr><td colSpan={4} className="text-center text-gray-400 py-4">لا توجد ضمانات</td></tr>}
+            {warranties.length === 0 && <tr><td colSpan={4} className="text-center text-steel-500 py-4">لا توجد ضمانات</td></tr>}
           </tbody>
         </table>
       </div>

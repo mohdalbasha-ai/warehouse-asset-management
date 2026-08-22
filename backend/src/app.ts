@@ -6,6 +6,8 @@ import rateLimit from "express-rate-limit";
 import { authRouter } from "./modules/auth/auth.routes";
 import { departmentRouter } from "./modules/organization/department.routes";
 import { centerRouter } from "./modules/organization/center.routes";
+import { idaraRouter } from "./modules/organization/idara.routes";
+import { qismRouter } from "./modules/organization/qism.routes";
 import { employeeRouter } from "./modules/organization/employee.routes";
 import { contractRouter } from "./modules/contracts/contract.routes";
 import { stockRouter } from "./modules/inventory/stock.routes";
@@ -21,37 +23,24 @@ import { dashboardRouter } from "./modules/dashboard/dashboard.routes";
 import { userRouter, roleRouter } from "./modules/users/user.routes";
 import { auditLogRouter } from "./modules/audit/auditLog.routes";
 import { reportRouter } from "./modules/reports/report.routes";
+import { attachmentRouter } from "./modules/attachments/attachment.routes";
 import { errorHandler } from "./middleware/errorHandler";
 
 export function createApp() {
   const app = express();
 
   app.use(helmet());
-
-  app.use(
-    cors({
-      origin: "https://warehouse-frontend-irof.onrender.com",
-      credentials: true,
-      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization"],
-    })
-  );
-
-  app.options("*", cors());
-
+  app.use(cors());
   app.use(express.json({ limit: "5mb" }));
 
-  const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 20,
-    standardHeaders: true,
-    legacyHeaders: false,
-  });
-
+  // حماية أساسية من هجمات القوة الغاشمة على تسجيل الدخول
+  const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
   app.use("/api/auth", authLimiter, authRouter);
 
   app.use("/api/departments", departmentRouter);
   app.use("/api/centers", centerRouter);
+  app.use("/api/idarat", idaraRouter);
+  app.use("/api/aqsam", qismRouter);
   app.use("/api/employees", employeeRouter);
   app.use("/api/contracts", contractRouter);
   app.use("/api/stock", stockRouter);
@@ -68,11 +57,11 @@ export function createApp() {
   app.use("/api/roles", roleRouter);
   app.use("/api/audit-log", auditLogRouter);
   app.use("/api/reports", reportRouter);
+  app.use("/api/attachments", attachmentRouter);
 
-  app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok" });
-  });
+  app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 
+  // يجب أن يكون آخر middleware
   app.use(errorHandler);
 
   return app;

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import DataTable from "../components/DataTable";
 import Modal from "../components/Modal";
+import { Plus } from "lucide-react";
 
 interface Item { id: string; itemNumber: string; name: string; category: string; unit: string; minStock: number; }
 
@@ -31,8 +32,9 @@ export default function ItemsPage() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">الأصناف</h1>
-        <button className="btn btn-primary" onClick={() => setShow(true)}>+ صنف جديد</button>
+        <h1 className="font-display text-xl font-bold text-ink-900">الأصناف</h1>
+        <button className="btn btn-primary" onClick={() => setShow(true)}>
+          <Plus className="w-4 h-4" /> صنف جديد</button>
       </div>
       <div className="card">
         <DataTable
@@ -49,7 +51,7 @@ export default function ItemsPage() {
       {show && (
         <Modal title="صنف جديد" onClose={() => setShow(false)}>
           <div className="space-y-3">
-            {error && <div className="text-red-600 text-sm">{error}</div>}
+            {error && <div className="text-danger-600 text-sm">{error}</div>}
             <input className="input" placeholder="رقم الصنف" value={form.itemNumber} onChange={(e) => setForm({ ...form, itemNumber: e.target.value })} />
             <input className="input" placeholder="الاسم" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             <input className="input" placeholder="التصنيف" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
